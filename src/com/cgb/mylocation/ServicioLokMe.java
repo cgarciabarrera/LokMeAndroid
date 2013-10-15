@@ -107,7 +107,7 @@ public class ServicioLokMe extends Service {
 			public void gotLocation(Location location) {
 				// TODO Auto-generated method stub
 
-				new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Double.toString(location.getLatitude()),Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime() )).execute();
+				new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Double.toString(location.getLatitude()),Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime()), Float.toString(location.getSpeed()),Double.toString(location.getAltitude()), Double.toString(location.getBearing()) ).execute();
 
 			}
 		};
@@ -159,16 +159,22 @@ public class ServicioLokMe extends Service {
 		String Orig;
 		String Hora;
 		String URLEnvio;
-		public SendPosition(String URLEnvio, String lat, String lon, String acc, String orig, String hora) {
+		String Speed;
+		String Height;
+		String Course;
+		
+		
+		public SendPosition(String URLEnvio, String lat, String lon, String acc, String orig, String hora, String Speed, String Height, String Course) {
 			this.Lat =lat;
 			this.Lon = lon;
 			this.Acc = acc;
 			this.Orig =orig;
 			this.Hora =hora;
 			this.URLEnvio = URLEnvio;
-			
-
-
+			this.Speed = Speed;
+			this.Height=Height;
+			this.Course=Course;
+					
 		}
 
 		@Override
@@ -185,6 +191,10 @@ public class ServicioLokMe extends Service {
 				nameValuePairs.add(new BasicNameValuePair("imei", Funciones.IMEI));
 				nameValuePairs.add(new BasicNameValuePair("accuracy", Acc));
 				nameValuePairs.add(new BasicNameValuePair("provider", Orig));
+				nameValuePairs.add(new BasicNameValuePair("speed", Speed));
+				nameValuePairs.add(new BasicNameValuePair("height", Height));
+				nameValuePairs.add(new BasicNameValuePair("course", Course));
+				
 				httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 				// Execute HTTP Post Request
