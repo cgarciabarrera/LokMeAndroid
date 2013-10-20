@@ -15,18 +15,19 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-
 import com.cgb.mylocation.MyLocation.LocationResult;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.provider.CallLog;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -36,7 +37,7 @@ public class ServicioLokMe extends Service {
 
 	private static Timer timer = new Timer(); 
 
-
+	//private Context ctx=null;
 
 
 	//public static // SQLiteDatabase Funciones.dbBizz = null;
@@ -51,14 +52,13 @@ public class ServicioLokMe extends Service {
 
 		TelephonyManager mngr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
 		Funciones.IMEI=  mngr.getDeviceId();
-		
-		Funciones.nombreBD =  "/data/data/"  + getApplicationContext().getPackageName() + "/databases/LokMe.db";
-		if (Funciones.dbBizz==null)
-		{
-			Funciones.dbBizz = openOrCreateDatabase(Funciones.nombreBD, SQLiteDatabase.OPEN_READWRITE , null);
-		}
+
+		Funciones.PreparaConexionBD(getApplicationContext());
+
+		final String CREATE_TABLE_points = "CREATE TABLE points (idpoint INTEGER PRIMARY KEY AUTOINCREMENT,accuracy double, altitude double, bearing double, longitude double, latitude double, provider string, speed double, timefix double, hasaccuracy boolean, hasaltitude boolean, hasbearing boolean, hasspeed boolean, charging boolean, batterylevel double) ;";
 		try {
-			//android.os.Debug.waitForDebugger();
+			Funciones.dbBizz.execSQL(CREATE_TABLE_points);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -67,6 +67,8 @@ public class ServicioLokMe extends Service {
 
 	public void onReceive(Context context, Intent intent)
 	{
+		//this.ctx=context;
+
 		if("android.intent.action.BOOT_COMPLETED".equals(intent.getAction()))
 		{
 			Intent serviceLauncher = new Intent(context, ServicioLokMe.class);
@@ -92,7 +94,7 @@ public class ServicioLokMe extends Service {
 		//		Toast.makeText(this, "My Service Started", Toast.LENGTH_LONG).show();
 		//Log.d(TAG, "onStart");
 		//		player.start();
-		timer.scheduleAtFixedRate(new mainTask(), 10000, 120000);
+		timer.scheduleAtFixedRate(new mainTask(), 10000, 10000);
 		Funciones.isServiceRunning=true;
 
 		//timer.scheduleAtFixedRate(new mainTask(), 60000, 30000);
@@ -107,7 +109,31 @@ public class ServicioLokMe extends Service {
 			public void gotLocation(Location location) {
 				// TODO Auto-generated method stub
 
-				new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Double.toString(location.getLatitude()),Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime()), Float.toString(location.getSpeed()),Double.toString(location.getAltitude()), Double.toString(location.getBearing()) ).execute();
+				//meterlo en BD lo primero, luego intentar mandarlo
+
+				Funciones.guardarenBDPunto(getApplicationContext(), location);
+
+
+				//leer de la bd todos los puntos e ir mandandolos y eliminando si ok.
+
+				Cursor c = Funciones.dbBizz.rawQuery("select * from points order by idpoint desc", null);
+
+				try
+				{
+					if (c != null) {						
+						while (c.moveToNext()) { 			
+
+							new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Integer.toString(c.getInt(c.getColumnIndex("idpoint"))) , Long.toString(c.getLong(c.getColumnIndex("timefix"))) , Integer.toString(c.getInt(c.getColumnIndex("batterylevel"))) , Integer.toString(c.getInt(c.getColumnIndex("charging"))),  Integer.toString(c.getInt(c.getColumnIndex("hasaltitude"))) , Integer.toString(c.getInt(c.getColumnIndex("hasaccuracy"))) , Integer.toString(c.getInt(c.getColumnIndex("hasbearing"))) , Integer.toString(c.getInt(c.getColumnIndex("hasspeed"))), Double.toString(location.getLatitude()), Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime()), Float.toString(location.getSpeed()),Double.toString(location.getAltitude()), Double.toString(location.getBearing()) ).execute();
+							Funciones.dbBizz.execSQL("delete from points where idpoint = " + c.getInt(c.getColumnIndex("idpoint")));
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+				c.close();
+
 
 			}
 		};
@@ -150,7 +176,7 @@ public class ServicioLokMe extends Service {
 
 	}
 
-	public class SendPosition extends AsyncTask<String, String, String>
+	public class SendPosition extends AsyncTask<String, String, String> 
 	{
 
 		String Lat;
@@ -162,9 +188,16 @@ public class ServicioLokMe extends Service {
 		String Speed;
 		String Height;
 		String Course;
+		String BatteryLevel;
+		String isCharging;
+		String hasAltitude;
+		String hasAccuracy;
+		String hasBearing;
+		String hasSpeed;
+		String TimeFix;
 		
-		
-		public SendPosition(String URLEnvio, String lat, String lon, String acc, String orig, String hora, String Speed, String Height, String Course) {
+
+		public SendPosition(String URLEnvio, String idPoint, String timefix, String batterylevel, String ischarging, String hasaltitude, String hasaccuracy, String hasbearing, String hasspeed, String lat, String lon, String acc, String orig, String hora, String Speed, String Height, String Course)  throws Exception {
 			this.Lat =lat;
 			this.Lon = lon;
 			this.Acc = acc;
@@ -174,7 +207,14 @@ public class ServicioLokMe extends Service {
 			this.Speed = Speed;
 			this.Height=Height;
 			this.Course=Course;
-					
+			this.BatteryLevel= batterylevel;
+			this.isCharging = ischarging;
+			this.hasAltitude = hasaltitude;
+			this.hasAccuracy = hasaccuracy;
+			this.hasBearing = hasbearing;
+			this.hasSpeed = hasspeed;
+			this.TimeFix = timefix;
+
 		}
 
 		@Override
@@ -185,6 +225,8 @@ public class ServicioLokMe extends Service {
 
 			try {
 				// Add your data
+
+				
 				List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
 				nameValuePairs.add(new BasicNameValuePair("latitude", Lat));
 				nameValuePairs.add(new BasicNameValuePair("longitude", Lon));
@@ -194,6 +236,13 @@ public class ServicioLokMe extends Service {
 				nameValuePairs.add(new BasicNameValuePair("speed", Speed));
 				nameValuePairs.add(new BasicNameValuePair("height", Height));
 				nameValuePairs.add(new BasicNameValuePair("course", Course));
+				nameValuePairs.add(new BasicNameValuePair("batterylevel", BatteryLevel ));
+				nameValuePairs.add(new BasicNameValuePair("ischarging", isCharging));
+				nameValuePairs.add(new BasicNameValuePair("hasaltitude", hasAltitude));
+				nameValuePairs.add(new BasicNameValuePair("hasaccuracy", hasAccuracy));
+				nameValuePairs.add(new BasicNameValuePair("hasbearing", hasBearing));
+				nameValuePairs.add(new BasicNameValuePair("hasspeed", hasSpeed));
+				nameValuePairs.add(new BasicNameValuePair("timefix", TimeFix));
 				
 				httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
