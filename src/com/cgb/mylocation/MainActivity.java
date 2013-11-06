@@ -1,6 +1,9 @@
 package com.cgb.mylocation;
 
 
+
+import com.google.android.gms.maps.GoogleMap;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Activity;
@@ -14,8 +17,13 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
 
+
 public class MainActivity extends Activity {
 
+	
+
+	
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -51,7 +59,15 @@ public class MainActivity extends Activity {
 		txtIMEI.setText(mngr.getDeviceId());
 		
 		
-        
+		Button bAnade = (Button) this.findViewById(R.id.Button01);
+
+		bAnade.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View view) {	
+				Intent i = new Intent(getApplicationContext(), Mapa.class);
+				startActivity(i);
+			}
+		});
+		
 
 		
 		

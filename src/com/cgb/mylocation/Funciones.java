@@ -14,8 +14,8 @@ public class Funciones {
 	public static SQLiteDatabase dbBizz = null; //openOrCreateDatabase(Funciones.nombreBD, // SQLiteDatabase.OPEN_READONLY, null);
 	static String nombreBD = "";
 	static boolean isServiceRunning =false;
-	static String Dominio = "http://192.168.1.5:3000/";
-	//static String Dominio = "http://agile-forest-7134.herokuapp.com/";
+	//static String Dominio = "http://192.168.1.5:3000/";
+	static String Dominio = "http://agile-forest-7134.herokuapp.com/";
 	static String PaginaNewPoint =  "points/manual/";
 	
 	
