@@ -71,4 +71,14 @@
         android:layout_marginTop="23dp"
         android:text="Ver el mapa" />
 
+    <ToggleButton
+        android:id="@+id/toggleButton1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/Button01"
+        android:layout_marginLeft="42dp"
+        android:layout_marginTop="25dp"
+        android:layout_toRightOf="@+id/textView2"
+        android:text="ToggleButton" />
+
 </RelativeLayout>

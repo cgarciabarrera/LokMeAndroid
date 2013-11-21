@@ -94,7 +94,7 @@ public class ServicioLokMe extends Service {
 		//		Toast.makeText(this, "My Service Started", Toast.LENGTH_LONG).show();
 		//Log.d(TAG, "onStart");
 		//		player.start();
-		timer.scheduleAtFixedRate(new mainTask(), 10000, 10000);
+		timer.scheduleAtFixedRate(new mainTask(), 10000, 60000);
 		Funciones.isServiceRunning=true;
 
 		//timer.scheduleAtFixedRate(new mainTask(), 60000, 30000);
