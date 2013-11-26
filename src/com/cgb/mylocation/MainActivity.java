@@ -1,88 +1,79 @@
 package com.cgb.mylocation;
 
-
-
-import com.google.android.gms.maps.GoogleMap;
-
-import android.net.Uri;
-import android.os.Bundle;
 import android.app.Activity;
-import android.content.Context;
+import android.app.ProgressDialog;
+import android.app.TabActivity;
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
-import android.telephony.TelephonyManager;
-import android.view.Menu;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.EditText;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.widget.TabHost;
 
 
-public class MainActivity extends Activity {
+import android.widget.TabHost.TabSpec;
 
-	
 
-	
-	
+public class MainActivity extends TabActivity {
+	//private static final int PICK_CONTACT = 0;
+	/** Called when the activity is first created. */
+	//public static // SQLiteDatabase Funciones.dbBizz = null;
+	//private ProgressDialog m_ProgressDialog = null;
+
+	public static Activity actividad;
+	ProgressDialog pd = null;
+
+	public void onDestroy(Bundle savedInstanceState) {
+		//super.onDestroy(savedInstanceState);
+		pd.dismiss();
+	}
+
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
+	public void onResume() {
+		super.onResume();
+
+
+
+
+
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
 
-		setContentView(R.layout.activity_main);
-		
+		final TabHost tabHost =  getTabHost();
 
+		tabHost.setup();
 
-		EditText txtIMEI = (EditText) findViewById(R.id.txtIMEI);
+		Intent intent = new Intent().setClass(this, Mapa.class);
+		Bundle b2 = new Bundle();
+		b2.putString("favorito", "0"); //Your id
+		intent.putExtras(b2); //Put your id to your next Intent
 
+		Intent intent2 = new Intent().setClass(this, Status.class);
 
-        Button btnURL = (Button) findViewById(R.id.btnURL);
-        btnURL.setText(Funciones.Dominio);
-        
-        btnURL.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-            	
-
-				Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(Funciones.Dominio));
-				startActivity(browserIntent);
-            	
-            }
-        });
-        
-        
-        if (!Funciones.isServiceRunning)
-        {
-        	startService(new Intent(MainActivity.this, ServicioLokMe.class));
-        }
-        
-		TelephonyManager mngr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
-		txtIMEI.setText(mngr.getDeviceId());
+		Intent intent3 = new Intent().setClass(this, Alarmas.class);
 		
 		
-		Button bAnade = (Button) this.findViewById(R.id.Button01);
+		Bundle b = new Bundle();
+		b.putString("favorito", "1"); //Your id
+		intent3.putExtras(b); //Put your id to your next Intent
 
-		bAnade.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View view) {	
-				Intent i = new Intent(getApplicationContext(), Mapa.class);
-				startActivity(i);
-			}
-		});
-		
+		Resources res = getResources();
+		// Initialize a TabSpec for each tab and add it to the TabHost
+		TabSpec spec = tabHost.newTabSpec("ag1").setIndicator("Status",res.getDrawable(R.drawable.ic_launcher)).setContent(intent);
+		tabHost.addTab(spec);
+		TabSpec spec2 = tabHost.newTabSpec("ag2").setIndicator("Mapa",res.getDrawable(R.drawable.ic_plusone_medium_off_client)).setContent(intent2);
+		tabHost.addTab(spec2);
+		TabSpec spec3 = tabHost.newTabSpec("ag3").setIndicator("Alarms",res.getDrawable(R.drawable.ic_launcher)).setContent(intent3);
+		tabHost.addTab(spec3);
 
-		
-		
+
 
 	}
+	
+	
+	
 
-	
-	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
-	}
 
-	
 
 }
