@@ -12,7 +12,6 @@ import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -239,6 +238,71 @@ public class Funciones {
 
 	}
 
+	
+	public static String AgregaDevice(String url, String token, String IMEIaAgregar, Context ctx)
+
+	{
+
+		boolean success=false;
+
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+		nameValuePairs.add(new BasicNameValuePair("auth_token", token));
+		nameValuePairs.add(new BasicNameValuePair("imei", IMEIaAgregar));
+		//login sin datos del timer, ignorar.
+		HttpResponse JsonResp=null;
+
+		try
+		{
+			JsonResp = HttpUtils.LlamadaHttpPost(url, nameValuePairs,ctx);
+		}
+		catch (Exception e)
+		{
+			success=false;
+			return "Error";
+		}
+
+		try {
+			//Log.e("resp", Funciones.getResponseBody(JsonResp));
+			JSONObject jsonObject = new JSONObject(HttpUtils.getResponseBody(JsonResp));
+			Iterator<?> keys = jsonObject.keys();
+			Map<String, String> map = new HashMap<String, String>();
+			while (keys.hasNext()) {
+				String key = (String) keys.next();
+				map.put(key, jsonObject.getString(key));
+			}
+
+
+			try
+			{
+				if (map.get("respuesta").length()>1)
+				{
+					success=true;
+					return map.get("respuesta");
+
+				}
+				else
+				{
+					success=false;
+					return "Error";
+
+				}
+			}
+			catch(Exception e)
+			{
+				success=false;
+				return "Error";
+			
+			}
+
+		} catch (JSONException e) {
+			success=false;
+			
+			e.printStackTrace();
+			return "Error";
+		}
+		
+
+	}
 	public static boolean hayInternet(Context contexto) {
 		boolean lRet = false;
 		//Context contexto = Utils.CoreLib.Context();
