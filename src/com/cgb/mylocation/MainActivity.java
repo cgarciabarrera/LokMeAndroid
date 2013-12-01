@@ -45,19 +45,17 @@ public class MainActivity extends TabActivity {
 		tabHost.setup();
 
 		Intent intent = new Intent().setClass(this, Mapa.class);
-		Bundle b2 = new Bundle();
-		b2.putString("favorito", "0"); //Your id
-		intent.putExtras(b2); //Put your id to your next Intent
+//		Bundle b2 = new Bundle();
+//		b2.putString("favorito", "0"); //Your id
+//		intent.putExtras(b2); //Put your id to your next Intent
 
 		Intent intent2 = new Intent().setClass(this, Status.class);
 
 		Intent intent3 = new Intent().setClass(this, Alarmas.class);
-		
-		
-		Bundle b = new Bundle();
-		b.putString("favorito", "1"); //Your id
-		intent3.putExtras(b); //Put your id to your next Intent
 
+		Intent intent4 = new Intent().setClass(this, Devices.class);
+
+		
 		Resources res = getResources();
 		// Initialize a TabSpec for each tab and add it to the TabHost
 		TabSpec spec = tabHost.newTabSpec("ag1").setIndicator("Status",res.getDrawable(R.drawable.ic_launcher)).setContent(intent);
@@ -66,12 +64,21 @@ public class MainActivity extends TabActivity {
 		tabHost.addTab(spec2);
 		TabSpec spec3 = tabHost.newTabSpec("ag3").setIndicator("Alarms",res.getDrawable(R.drawable.ic_launcher)).setContent(intent3);
 		tabHost.addTab(spec3);
-
+		TabSpec spec4 = tabHost.newTabSpec("ag4").setIndicator("Devices",res.getDrawable(R.drawable.ic_launcher)).setContent(intent4);
+		tabHost.addTab(spec4);
+		
+        if (!Funciones.isServiceRunning)
+        {
+                startService(new Intent(MainActivity.this, ServicioLokMe.class));
+        }
 
 
 	}
 	
-	
+
+	public void switchTab(int tab){
+        getTabHost().setCurrentTab(tab);
+}
 	
 
 

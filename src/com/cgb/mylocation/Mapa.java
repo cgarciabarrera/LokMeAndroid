@@ -4,9 +4,6 @@ package com.cgb.mylocation;
 import java.util.ArrayList;
 
 import org.apache.http.HttpResponse;
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,25 +16,17 @@ import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMyLocationChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
-import android.graphics.Color;
 
 public class Mapa extends FragmentActivity implements OnMyLocationChangeListener {
 
@@ -45,6 +34,8 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 	GoogleMap googleMap;
 
 	ProgressDialog pd =null;
+	
+	String IMEIParam = null;
 
 	@Override
 	protected void onResume() {
@@ -161,7 +152,11 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 		googleMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
 			@Override
 			public void onInfoWindowClick(Marker marker) {
-				String a = marker.getTitle();
+				String imei = marker.getSnippet();
+				
+				//imei:862304020094218
+				
+				new LlenaPuntosDevice(imei, pd).execute();
 
 
 			}
@@ -172,7 +167,17 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 		pd.setMessage("Buscando devices");
 		pd.setIcon(R.drawable.ic_launcher);
 		pd.setCancelable(false);
-		new LlenaPuntos(pd).execute();
+		if (!Funciones.IMEIparametro.equals(""))
+		{
+			new LlenaPuntosDevice(Funciones.IMEIparametro, pd).execute();
+			Funciones.IMEIparametro="";
+			
+		}
+		else
+		{
+			new LlenaPuntos(pd).execute();
+			
+		}
 
 
 
@@ -239,57 +244,12 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 			if(result ==1)
 			{
 				//procesar JsonDevices y pintarlo
-				JSONArray jArray =null;
-				try {
-					jArray = new JSONArray(Funciones.JsonDevices);
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
+				
 				ArrayList<Marker> mMarkerArray = new ArrayList<Marker>();
-				googleMap.clear();
-				for (int i=0;i< jArray.length();i++)
-				{
 
-					Marker marker=null;
-					try {
-						marker = googleMap.addMarker(new MarkerOptions()
-						.position(new LatLng(Double.parseDouble(jArray.getJSONObject(i).getString("latitude")), Double.parseDouble(jArray.getJSONObject(i).getString("longitude"))))
-						.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
-						.title(jArray.getJSONObject(i).getString("username") + " " + jArray.getJSONObject(i).getString("name") )
-						.snippet(jArray.getJSONObject(i).getString("updated_at")));
-						mMarkerArray.add(marker);
-						
-						LatLng point = new LatLng(Double.parseDouble(jArray.getJSONObject(i).getString("latitude")), Double.parseDouble(jArray.getJSONObject(i).getString("longitude")));
-						CircleOptions circle=new CircleOptions();
-						circle.strokeWidth(1);
-						circle.center(point).fillColor(Color.TRANSPARENT).radius(Double.parseDouble(jArray.getJSONObject(i).getString("accuracy")));
-						googleMap.addCircle(circle); 
-
-
-					} catch (NumberFormatException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (JSONException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-
-
-				}
-
-				LatLngBounds.Builder builder = new LatLngBounds.Builder();
-				for (Marker m : mMarkerArray) {
-					builder.include(m.getPosition());
-				}
-
-				LatLngBounds bounds = builder.build();
-
-				int padding = 120; // offset from edges of the map in pixels
-				CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
-				googleMap.animateCamera(cu);
+				Funciones.PintaDevices(googleMap,mMarkerArray,true);
+				
+				Funciones.CentraSobreMarker(googleMap, mMarkerArray);
 
 			}
 			progress.dismiss();
@@ -304,7 +264,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 
 			}
 
-			if(Funciones.ObtenDevices("http://lokme.lextrendlabs.com/devices/listamisdevices.json", Funciones.AuthToken, getApplicationContext()))
+			if(Funciones.ObtenDevices("http://lokme.lextrendlabs.com/devices/listamisdevices.json","http://lokme.lextrendlabs.com/devices/listamisdevicesconcompartidos.json",  Funciones.AuthToken, getApplicationContext()))
 			{
 			}
 
@@ -387,5 +347,65 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 	}
 
 
+	public class LlenaPuntosDevice extends AsyncTask<Void, Integer, Integer> {
+		private ProgressDialog progress;
+		//private TextView price;
+		private HttpResponse JsonResp;
+		//private Context c;
+		private String IMEI = "";
+
+		public LlenaPuntosDevice(String IMEI, ProgressDialog progress) {
+			this.progress = progress;
+			this.IMEI=IMEI;
+					
+			//this.price = price;
+			//this.c =c;
+		}
+
+		public void onPreExecute() {
+			//progress.startAnimation(null);
+			//this.progress.setVisibility(View.VISIBLE);
+			progress.show();
+		}
+
+
+		public void onPostExecute(Integer result) {
+			//this.progress.setVisibility(View.GONE);
+			if(result ==1)
+			{
+				//procesar JsonDevices y pintarlo
+				ArrayList<LatLng> mLatLngArray = new ArrayList<LatLng>();
+				ArrayList<Marker> mMarkerArray = new ArrayList<Marker>();
+				
+				Funciones.PintaDevices(googleMap, mMarkerArray, true);
+				Funciones.PintaRuta(googleMap, mLatLngArray, false);
+
+				Funciones.CentraSobreLatLng(googleMap, mLatLngArray);
+
+			}
+			progress.dismiss();
+
+		}
+
+		@Override
+		protected Integer doInBackground(Void... params) {
+
+			if (Funciones.HacerLogin("http://lokme.lextrendlabs.com/api/v1/tokens.json", "cgarciabarrera@gmail.com", "Carlos01", getApplicationContext()))
+			{
+
+			}
+
+			if(Funciones.ObtenDevices("http://lokme.lextrendlabs.com/devices/listamisdevices.json", "http://lokme.lextrendlabs.com/devices/listamisdevicesconcompartidos.json" , Funciones.AuthToken, getApplicationContext()))
+			{
+			}
+			
+			Funciones.ObtenPuntosdeDevice("http://lokme.lextrendlabs.com/devices/puntosdedevice.json", IMEI, Funciones.AuthToken, getApplicationContext());
+			
+
+			
+			return 1;
+		}
+	}
+	
 
 }

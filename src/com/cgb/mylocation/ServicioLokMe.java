@@ -94,7 +94,7 @@ public class ServicioLokMe extends Service {
 		//		Toast.makeText(this, "My Service Started", Toast.LENGTH_LONG).show();
 		//Log.d(TAG, "onStart");
 		//		player.start();
-		timer.scheduleAtFixedRate(new mainTask(), 10000, 60000);
+		timer.scheduleAtFixedRate(new mainTask(), 1000, 6000);
 		Funciones.isServiceRunning=true;
 
 		//timer.scheduleAtFixedRate(new mainTask(), 60000, 30000);
@@ -143,9 +143,11 @@ public class ServicioLokMe extends Service {
 			@Override
 			public void dispatchMessage(Message msg) {
 				super.dispatchMessage(msg);
-				MyLocation myLocation = new MyLocation();
-
-				myLocation.getLocation(getApplicationContext(), locationResult);
+				if (Funciones.StatusAPP)
+				{
+					MyLocation myLocation = new MyLocation();
+					myLocation.getLocation(getApplicationContext(), locationResult);
+				}
 			}
 		};
 		public void run() { 
@@ -153,26 +155,6 @@ public class ServicioLokMe extends Service {
 				updateUI.sendEmptyMessage(0);
 			} catch (Exception e) {e.printStackTrace(); }
 		}
-
-
-		//		public void run() 
-		//		{
-		//
-		//
-		//			String a="";
-		//			Log.e("run", "service");
-		//
-		//			
-		//			
-		//			MyLocation myLocation = new MyLocation();
-		//			Context c = getApplicationContext();
-		//			myLocation.getLocation(getApplicationContext(), this.locationResult);
-		//
-		//
-		//
-		//		}
-
-
 
 	}
 
