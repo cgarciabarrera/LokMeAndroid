@@ -1,5 +1,6 @@
 package com.cgb.mylocation;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,6 +82,7 @@ public class Devices extends Activity
 				TextView txtImei= (TextView) view.findViewById(R.id.textIMEI);
 				
 				Funciones.IMEIparametro = txtImei.getText().toString();
+				Funciones.dateUltimaSincro= new Date(1990,1,1);
 				((MainActivity) getParent()).getTabHost().setCurrentTab(0);
 				
 			}

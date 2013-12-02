@@ -1,10 +1,13 @@
 package com.cgb.mylocation;
 
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -54,6 +57,12 @@ public class Funciones {
 	static String JsonArrayPuntosDevice="";
 	
 	static boolean StatusAPP = true;
+	
+	static Date dateUltimaSincro= new Date(1990,1,1);
+	
+	static String DeviceContreto="";
+	
+	static String ViendoPunto="";
 
 	public static void PreparaConexionBD(Context c)
 	{
@@ -582,10 +591,17 @@ public class Funciones {
 
 
 		}
+		
+		
 
 	}
 
 
-
+	public static int SegundsosDesde(Date inicial)
+	{
+		long diffInMs = new Date().getTime() - inicial.getTime();
+		return  (int) TimeUnit.MILLISECONDS.toSeconds(diffInMs);
+		
+	}
 
 }

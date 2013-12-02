@@ -1,9 +1,12 @@
 package com.cgb.mylocation;
 
 
+
+import java.util.Date;
 import java.util.ArrayList;
 
 import org.apache.http.HttpResponse;
+
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -22,6 +25,7 @@ import com.google.android.gms.maps.GoogleMap.OnMyLocationChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -34,7 +38,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 	GoogleMap googleMap;
 
 	ProgressDialog pd =null;
-	
+
 	String IMEIParam = null;
 
 	@Override
@@ -80,6 +84,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 				pd.setMessage("Buscando devices");
 				pd.setIcon(R.drawable.ic_launcher);
 				pd.setCancelable(false);
+				Funciones.IMEIparametro="";
 				new LlenaPuntos(pd).execute();
 
 			}
@@ -149,37 +154,44 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 		});
 
 
-		googleMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
-			@Override
-			public void onInfoWindowClick(Marker marker) {
-				String imei = marker.getSnippet();
-				
-				//imei:862304020094218
-				
-				new LlenaPuntosDevice(imei, pd).execute();
+		if (Funciones.SegundsosDesde(Funciones.dateUltimaSincro) > 60)
+		{
 
+
+			Funciones.dateUltimaSincro= new Date();
+			
+			googleMap.setOnInfoWindowClickListener(new OnInfoWindowClickListener() {
+				@Override
+				public void onInfoWindowClick(Marker marker) {
+					String imei = marker.getSnippet();
+
+					//imei:862304020094218
+
+					new LlenaPuntosDevice(imei, pd).execute();
+
+
+				}
+			});
+
+			pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+			pd.setTitle("Lokme");
+			pd.setMessage("Buscando devices");
+			pd.setIcon(R.drawable.ic_launcher);
+			pd.setCancelable(false);
+			if (!Funciones.IMEIparametro.equals(""))
+			{
+				
+				new LlenaPuntosDevice(Funciones.IMEIparametro, pd).execute();
+				//Funciones.IMEIparametro="";
 
 			}
-		});
+			else
+			{
+				new LlenaPuntos(pd).execute();
 
-		pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		pd.setTitle("Lokme");
-		pd.setMessage("Buscando devices");
-		pd.setIcon(R.drawable.ic_launcher);
-		pd.setCancelable(false);
-		if (!Funciones.IMEIparametro.equals(""))
-		{
-			new LlenaPuntosDevice(Funciones.IMEIparametro, pd).execute();
-			Funciones.IMEIparametro="";
-			
+			}
+
 		}
-		else
-		{
-			new LlenaPuntos(pd).execute();
-			
-		}
-
-
 
 
 	}
@@ -244,11 +256,11 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 			if(result ==1)
 			{
 				//procesar JsonDevices y pintarlo
-				
+
 				ArrayList<Marker> mMarkerArray = new ArrayList<Marker>();
 
 				Funciones.PintaDevices(googleMap,mMarkerArray,true);
-				
+
 				Funciones.CentraSobreMarker(googleMap, mMarkerArray);
 
 			}
@@ -357,7 +369,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 		public LlenaPuntosDevice(String IMEI, ProgressDialog progress) {
 			this.progress = progress;
 			this.IMEI=IMEI;
-					
+
 			//this.price = price;
 			//this.c =c;
 		}
@@ -366,6 +378,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 			//progress.startAnimation(null);
 			//this.progress.setVisibility(View.VISIBLE);
 			progress.show();
+			Funciones.DeviceContreto=IMEI;
 		}
 
 
@@ -376,7 +389,7 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 				//procesar JsonDevices y pintarlo
 				ArrayList<LatLng> mLatLngArray = new ArrayList<LatLng>();
 				ArrayList<Marker> mMarkerArray = new ArrayList<Marker>();
-				
+
 				Funciones.PintaDevices(googleMap, mMarkerArray, true);
 				Funciones.PintaRuta(googleMap, mLatLngArray, false);
 
@@ -398,14 +411,14 @@ public class Mapa extends FragmentActivity implements OnMyLocationChangeListener
 			if(Funciones.ObtenDevices("http://lokme.lextrendlabs.com/devices/listamisdevices.json", "http://lokme.lextrendlabs.com/devices/listamisdevicesconcompartidos.json" , Funciones.AuthToken, getApplicationContext()))
 			{
 			}
-			
-			Funciones.ObtenPuntosdeDevice("http://lokme.lextrendlabs.com/devices/puntosdedevice.json", IMEI, Funciones.AuthToken, getApplicationContext());
-			
 
-			
+			Funciones.ObtenPuntosdeDevice("http://lokme.lextrendlabs.com/devices/puntosdedevice.json", IMEI, Funciones.AuthToken, getApplicationContext());
+
+
+
 			return 1;
 		}
 	}
-	
+
 
 }
