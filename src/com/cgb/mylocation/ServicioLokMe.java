@@ -15,7 +15,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import com.cgb.mylocation.Login.IntentarLogin;
 import com.cgb.mylocation.MyLocation.LocationResult;
+import com.google.android.gms.appstate.a;
+import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Service;
 import android.content.Context;
@@ -53,16 +56,28 @@ public class ServicioLokMe extends Service {
 		TelephonyManager mngr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
 		Funciones.IMEI=  mngr.getDeviceId();
 
+		
 		Funciones.PreparaConexionBD(getApplicationContext());
-
-		final String CREATE_TABLE_points = "CREATE TABLE points (idpoint INTEGER PRIMARY KEY AUTOINCREMENT,accuracy double, altitude double, bearing double, longitude double, latitude double, provider string, speed double, timefix double, hasaccuracy boolean, hasaltitude boolean, hasbearing boolean, hasspeed boolean, charging boolean, batterylevel double) ;";
-		try {
-			Funciones.dbBizz.execSQL(CREATE_TABLE_points);
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		
+		Cursor c = Funciones.dbBizz.rawQuery("SELECT * from enviarposiciones", null);
+		if (c != null) 
+		{
+			if (c.moveToNext()) 
+			{
+				Funciones.PuedoEnviarPosiciones = c.getInt(c.getColumnIndex("puedo"));
+			}
+			else
+			{
+				Funciones.PuedoEnviarPosiciones = 0;
+			}
+		}
+		else
+		{
+			Funciones.PuedoEnviarPosiciones = 0;
 		}
 
+		c.close();
+		
 	}
 
 	public void onReceive(Context context, Intent intent)
@@ -94,7 +109,7 @@ public class ServicioLokMe extends Service {
 		//		Toast.makeText(this, "My Service Started", Toast.LENGTH_LONG).show();
 		//Log.d(TAG, "onStart");
 		//		player.start();
-		timer.scheduleAtFixedRate(new mainTask(), 1000, 6000);
+		timer.scheduleAtFixedRate(new mainTask(), 0, 60000);
 		Funciones.isServiceRunning=true;
 
 		//timer.scheduleAtFixedRate(new mainTask(), 60000, 30000);
@@ -112,7 +127,8 @@ public class ServicioLokMe extends Service {
 				//meterlo en BD lo primero, luego intentar mandarlo
 
 				Funciones.guardarenBDPunto(getApplicationContext(), location);
-
+				Funciones.Ultima= new LatLng(location.getLatitude(), location.getLongitude());
+				
 
 				//leer de la bd todos los puntos e ir mandandolos y eliminando si ok.
 
@@ -122,7 +138,10 @@ public class ServicioLokMe extends Service {
 				{
 					if (c != null) {						
 						while (c.moveToNext()) { 			
-
+							
+							//new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Integer.toString(c.getInt(c.getColumnIndex("idpoint"))) , Long.toString(c.getLong(c.getColumnIndex("timefix"))) , Integer.toString(c.getInt(c.getColumnIndex("batterylevel"))) , Integer.toString(c.getInt(c.getColumnIndex("charging"))),  Integer.toString(c.getInt(c.getColumnIndex("hasaltitude"))) , Integer.toString(c.getInt(c.getColumnIndex("hasaccuracy"))) , Integer.toString(c.getInt(c.getColumnIndex("hasbearing"))) , Integer.toString(c.getInt(c.getColumnIndex("hasspeed"))), Double.toString(location.getLatitude()), Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime()), Float.toString(location.getSpeed()),Double.toString(location.getAltitude()), Double.toString(location.getBearing()));
+							//sp.execute();
+							
 							new SendPosition(Funciones.Dominio + Funciones.PaginaNewPoint, Integer.toString(c.getInt(c.getColumnIndex("idpoint"))) , Long.toString(c.getLong(c.getColumnIndex("timefix"))) , Integer.toString(c.getInt(c.getColumnIndex("batterylevel"))) , Integer.toString(c.getInt(c.getColumnIndex("charging"))),  Integer.toString(c.getInt(c.getColumnIndex("hasaltitude"))) , Integer.toString(c.getInt(c.getColumnIndex("hasaccuracy"))) , Integer.toString(c.getInt(c.getColumnIndex("hasbearing"))) , Integer.toString(c.getInt(c.getColumnIndex("hasspeed"))), Double.toString(location.getLatitude()), Double.toString(location.getLongitude()), Float.toString(location.getAccuracy()), (String)location.getProvider(),  Long.toString(location.getTime()), Float.toString(location.getSpeed()),Double.toString(location.getAltitude()), Double.toString(location.getBearing()) ).execute();
 							Funciones.dbBizz.execSQL("delete from points where idpoint = " + c.getInt(c.getColumnIndex("idpoint")));
 						}
@@ -143,7 +162,7 @@ public class ServicioLokMe extends Service {
 			@Override
 			public void dispatchMessage(Message msg) {
 				super.dispatchMessage(msg);
-				if (Funciones.StatusAPP)
+				if (Funciones.PuedoEnviarPosiciones==1)
 				{
 					MyLocation myLocation = new MyLocation();
 					myLocation.getLocation(getApplicationContext(), locationResult);
@@ -244,7 +263,6 @@ public class ServicioLokMe extends Service {
 
 
 	}
-
 
 
 

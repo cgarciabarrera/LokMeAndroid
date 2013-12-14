@@ -62,7 +62,7 @@ int drawable ic_plusone_tall_off_client 0x7f020020
 int id Button01 0x7f05000a
 int id TextView01 0x7f050007
 int id TextView02 0x7f050009
-int id action_settings 0x7f050022
+int id action_settings 0x7f050023
 int id addNewDeviceButton 0x7f05001e
 int id btnURL 0x7f050008
 int id button1 0x7f05001a
@@ -73,6 +73,7 @@ int id invitation 0x7f050011
 int id layout_root 0x7f05001f
 int id listView1 0x7f05000c
 int id login 0x7f050017
+int id logout 0x7f050022
 int id map 0x7f050019
 int id mapaVista 0x7f05001c
 int id none 0x7f050000

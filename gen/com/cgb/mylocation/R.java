@@ -193,7 +193,7 @@ containing a value of this type.
         public static final int Button01=0x7f05000a;
         public static final int TextView01=0x7f050007;
         public static final int TextView02=0x7f050009;
-        public static final int action_settings=0x7f050022;
+        public static final int action_settings=0x7f050023;
         public static final int addNewDeviceButton=0x7f05001e;
         public static final int btnURL=0x7f050008;
         public static final int button1=0x7f05001a;
@@ -204,6 +204,7 @@ containing a value of this type.
         public static final int layout_root=0x7f05001f;
         public static final int listView1=0x7f05000c;
         public static final int login=0x7f050017;
+        public static final int logout=0x7f050022;
         public static final int map=0x7f050019;
         public static final int mapaVista=0x7f05001c;
         public static final int none=0x7f050000;

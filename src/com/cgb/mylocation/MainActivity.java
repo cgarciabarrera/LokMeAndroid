@@ -67,10 +67,7 @@ public class MainActivity extends TabActivity {
 		TabSpec spec4 = tabHost.newTabSpec("ag4").setIndicator("Devices",res.getDrawable(R.drawable.ic_launcher)).setContent(intent4);
 		tabHost.addTab(spec4);
 		
-        if (!Funciones.isServiceRunning)
-        {
-                startService(new Intent(MainActivity.this, ServicioLokMe.class));
-        }
+
 
 
 	}

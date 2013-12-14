@@ -277,10 +277,7 @@ public class DetalleDevice extends FragmentActivity implements OnMyLocationChang
 		@Override
 		protected Integer doInBackground(Void... params) {
 
-			if (Funciones.HacerLogin("http://lokme.lextrendlabs.com/api/v1/tokens.json", "cgarciabarrera@gmail.com", "Carlos01", getApplicationContext()))
-			{
 
-			}
 
 			Funciones.ObtenPuntosdeDevice("http://lokme.lextrendlabs.com/devices/puntosdedevice.json", IMEIParam, Funciones.AuthToken, getApplicationContext());
 			

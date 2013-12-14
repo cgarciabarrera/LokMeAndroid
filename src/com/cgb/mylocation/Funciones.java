@@ -1,6 +1,7 @@
 package com.cgb.mylocation;
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,14 +12,21 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -33,15 +41,19 @@ import android.content.IntentFilter;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.util.Log;
 
 public class Funciones {
 	static String IMEI = "";
-	
+
 	static String IMEIparametro="";
 	public static SQLiteDatabase dbBizz = null; //openOrCreateDatabase(Funciones.nombreBD, // SQLiteDatabase.OPEN_READONLY, null);
 	static String nombreBD = "";
@@ -51,18 +63,33 @@ public class Funciones {
 	static String PaginaNewPoint =  "points/manual/";
 	static String AuthToken="";
 	static String JsonDevices="";
-	
-	static String JsonDevicesCompartidos= "";
 
+	static String JsonDevicesCompartidos= "";
+	
+	static String JsonDevicesCompleto="";
+	
 	static String JsonArrayPuntosDevice="";
-	
-	static boolean StatusAPP = true;
-	
+
+
+
 	static Date dateUltimaSincro= new Date(1990,1,1);
-	
+
 	static String DeviceContreto="";
-	
+
 	static String ViendoPunto="";
+
+	static String Username="";
+	static String Password="";
+
+	static Integer PuedoEnviarPosiciones=1;
+
+	static Integer DeviceIncluidoEnCuenta=0;
+
+	static String URLAGREGADEVICE = "http://lokme.lextrendlabs.com/devices/adddeviceapi.json";
+
+	static LatLng Ultima=null;
+	
+	static Integer noPreguntarAgregarDevice=0;
 
 	public static void PreparaConexionBD(Context c)
 	{
@@ -178,18 +205,32 @@ public class Funciones {
 					String key = (String) keys.next();
 					map.put(key, jsonObject.getString(key));
 				}
-
-				if (map.get("token").length()>1)
+				//busco el error
+				try
 				{
-					AuthToken = map.get("token").toString();
-					// BORRO TABLA LOGIN Y METO TO DO
-					//hago valida el apikey realmente.
-					success=true;
+					if (map.get("token").length()>1)
+					{
+						AuthToken = map.get("token").toString();
+						// BORRO TABLA LOGIN Y METO TO DO
+						//hago valida el apikey realmente.
+						success=true;
 
+						// lo grabo en la tabl login de la bd
+						Funciones.dbBizz.execSQL("delete from login");
+						Funciones.dbBizz.execSQL("insert into login (username, password) values (" + Funciones.EC(username) + ", " + Funciones.EC(password) +" )");
+
+
+					}
+					else
+					{
+						success=false;
+
+					}
 				}
-				else
+				catch(Exception e)
 				{
 					success=false;
+					e.printStackTrace();
 
 				}
 
@@ -220,7 +261,7 @@ public class Funciones {
 		HttpResponse JsonResp=null;
 
 		//devices normales
-		
+
 		try
 		{
 			JsonResp = HttpUtils.LlamadaHttpPost(url, nameValuePairs,ctx);
@@ -266,12 +307,12 @@ public class Funciones {
 			success=false;
 			e.printStackTrace();
 		}
-		
-		
-		
+
+
+
 		//devices incluyendo compartidos
-		
-		
+
+
 		try
 		{
 			JsonResp = HttpUtils.LlamadaHttpPost(urlCompartidos, nameValuePairs,ctx);
@@ -317,8 +358,18 @@ public class Funciones {
 			success=false;
 			e.printStackTrace();
 		}
-		
-		
+		JSONArray ja = null;
+		try {
+			ja =  concatArray(new JSONArray(JsonDevices), new JSONArray(JsonDevicesCompartidos));
+			//JsonDevicesCompleto = ja.toString();
+			JsonDevicesCompleto = JsonDevicesCompartidos;
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			JsonDevicesCompleto =JsonDevicesCompartidos;
+		}
+				
+
 		return success;
 
 	}
@@ -361,7 +412,7 @@ public class Funciones {
 	}
 
 
-	public static String AgregaDevice(String url, String token, String IMEIaAgregar, Context ctx)
+	public static String AgregaDevice(String url, String Nombre, String token, String IMEIaAgregar, Context ctx)
 
 	{
 
@@ -370,6 +421,7 @@ public class Funciones {
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
 		nameValuePairs.add(new BasicNameValuePair("auth_token", token));
 		nameValuePairs.add(new BasicNameValuePair("imei", IMEIaAgregar));
+		nameValuePairs.add(new BasicNameValuePair("name", Nombre));
 		//login sin datos del timer, ignorar.
 		HttpResponse JsonResp=null;
 
@@ -462,17 +514,21 @@ public class Funciones {
 
 	public static void CentraSobreMarker(GoogleMap googleMap, ArrayList<Marker> mMarkerArray)
 	{
-		LatLngBounds.Builder builder = new LatLngBounds.Builder();
-		for (Marker m : mMarkerArray) {
-			builder.include(m.getPosition());
+		if (mMarkerArray.size()>0)
+		{
+			LatLngBounds.Builder builder = new LatLngBounds.Builder();
+			for (Marker m : mMarkerArray) {
+				builder.include(m.getPosition());
+			}
+
+			LatLngBounds bounds = builder.build();
+
+			int padding = 120; // offset from edges of the map in pixels
+			CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+
+			googleMap.animateCamera(cu);
+
 		}
-
-		LatLngBounds bounds = builder.build();
-
-		int padding = 120; // offset from edges of the map in pixels
-		CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
-
-		googleMap.animateCamera(cu);
 	}
 
 	public static void PintaRuta(GoogleMap googleMap, ArrayList<LatLng> mLatLngArray, boolean limpiaMapa)
@@ -547,7 +603,8 @@ public class Funciones {
 		googleMap.addPolyline(polylineOptions);
 
 	}
-	public static void PintaDevices(GoogleMap googleMap,ArrayList<Marker> mMarkerArray , boolean limpiaMapa)
+
+	public static void PintaRutaPuntos(GoogleMap googleMap,ArrayList<Marker> mMarkerArray , boolean limpiaMapa)
 
 	{
 
@@ -591,8 +648,73 @@ public class Funciones {
 
 
 		}
-		
-		
+
+
+
+	}
+
+
+	public static void PintaDevices(GoogleMap googleMap,ArrayList<Marker> mMarkerArray , boolean limpiaMapa)
+
+	{
+		int existe=0;
+		JSONArray jArray =null;
+		try {
+			jArray = new JSONArray(Funciones.JsonDevicesCompleto );
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (limpiaMapa)
+		{
+			googleMap.clear();
+		}
+		for (int i=0;i< jArray.length();i++)
+		{
+
+			float color = 0;
+			
+			Marker marker=null;
+			try {
+				if (jArray.getJSONObject(i).getString("propio").equals("1"))
+				{
+					color = BitmapDescriptorFactory.HUE_GREEN;
+				}
+				else
+				{
+					color = BitmapDescriptorFactory.HUE_ROSE;
+				}
+				marker = googleMap.addMarker(new MarkerOptions()
+				.position(new LatLng(Double.parseDouble(jArray.getJSONObject(i).getString("latitude")), Double.parseDouble(jArray.getJSONObject(i).getString("longitude"))))
+				.icon(BitmapDescriptorFactory.defaultMarker(color))
+				.title(jArray.getJSONObject(i).getString("username") + " " + jArray.getJSONObject(i).getString("name") )
+				.snippet( jArray.getJSONObject(i).getString("imei")));
+				mMarkerArray.add(marker);
+
+				if (Funciones.IMEI.equals(jArray.getJSONObject(i).getString("imei")))
+				{
+					existe=1;
+				}
+
+
+				LatLng point = new LatLng(Double.parseDouble(jArray.getJSONObject(i).getString("latitude")), Double.parseDouble(jArray.getJSONObject(i).getString("longitude")));
+				CircleOptions circle=new CircleOptions();
+				circle.strokeWidth(1);
+				circle.center(point).fillColor(Color.TRANSPARENT).radius(Double.parseDouble(jArray.getJSONObject(i).getString("accuracy")));
+				googleMap.addCircle(circle); 
+
+
+			} catch (NumberFormatException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+
+		}
+		Funciones.DeviceIncluidoEnCuenta=existe;
 
 	}
 
@@ -601,7 +723,58 @@ public class Funciones {
 	{
 		long diffInMs = new Date().getTime() - inicial.getTime();
 		return  (int) TimeUnit.MILLISECONDS.toSeconds(diffInMs);
-		
+
 	}
 
+	public static void Trackear(Context c, boolean estado)
+	{
+		Funciones.PreparaConexionBD(c);
+		if (estado)
+		{
+			Funciones.dbBizz.execSQL("delete from enviarposiciones");
+			Funciones.dbBizz.execSQL("insert into enviarposiciones (puedo) values (1) ");
+			Funciones.PuedoEnviarPosiciones=1;
+		}
+		else
+		{
+			Funciones.dbBizz.execSQL("delete from enviarposiciones");
+			Funciones.dbBizz.execSQL("insert into enviarposiciones (puedo) values (0) ");
+			Funciones.PuedoEnviarPosiciones=0;
+		}
+	}
+
+	public static String getDeviceName() {
+		String manufacturer = Build.MANUFACTURER;
+		String model = Build.MODEL;
+		if (model.startsWith(manufacturer)) {
+			return capitalize(model);
+		} else {
+			return capitalize(manufacturer) + " " + model;
+		}
+	}
+
+
+	private static String capitalize(String s) {
+		if (s == null || s.length() == 0) {
+			return "";
+		}
+		char first = s.charAt(0);
+		if (Character.isUpperCase(first)) {
+			return s;
+		} else {
+			return Character.toUpperCase(first) + s.substring(1);
+		}
+	} 
+
+	public static JSONArray concatArray(JSONArray arr1, JSONArray arr2) throws JSONException {
+	    JSONArray result = new JSONArray();
+	    for (int i = 0; i < arr1.length(); i++) {
+	        result.put(arr1.get(i));
+	    }
+	    for (int i = 0; i < arr2.length(); i++) {
+	        result.put(arr2.get(i));
+	    }
+	    return result;
+	}
+	
 }
