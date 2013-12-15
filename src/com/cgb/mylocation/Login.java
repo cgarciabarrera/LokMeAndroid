@@ -8,10 +8,12 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.android.gcm.GCMRegistrar;
 
 public class Login extends Activity {
 	//private static final int PICK_CONTACT = 0;
@@ -19,14 +21,16 @@ public class Login extends Activity {
 	//public static // SQLiteDatabase Funciones.dbBizz = null;
 	//private ProgressDialog m_ProgressDialog = null;
 
-	
+
 	ProgressDialog pd = null;
-	
-	
+
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+
+
+		Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(this);
 		TelephonyManager mngr = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE); 
 		Funciones.IMEI=  mngr.getDeviceId();
 
@@ -35,8 +39,8 @@ public class Login extends Activity {
 		final TextView txtPassword = (TextView) findViewById(R.id.password);
 		pd = new ProgressDialog(Login.this);
 
-        Funciones.PreparaConexionBD(Login.this);
-        
+		Funciones.PreparaConexionBD(Login.this);
+
 		final String CREATE_TABLE_points = "CREATE TABLE points (idpoint INTEGER PRIMARY KEY AUTOINCREMENT,accuracy double, altitude double, bearing double, longitude double, latitude double, provider string, speed double, timefix double, hasaccuracy boolean, hasaltitude boolean, hasbearing boolean, hasspeed boolean, charging boolean, batterylevel double) ;";
 		try {
 			Funciones.dbBizz.execSQL(CREATE_TABLE_points);
@@ -57,11 +61,11 @@ public class Login extends Activity {
 		try {
 			Funciones.dbBizz.execSQL(CREATE_TABLE_enviarposiciones);
 			Funciones.Trackear(Login.this, true);
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-        
+
 		Cursor c = Funciones.dbBizz.rawQuery("SELECT * from login", null);
 		if (c != null) 
 		{
@@ -69,10 +73,10 @@ public class Login extends Activity {
 			{
 				Funciones.Username= c.getString(c.getColumnIndex("username"));
 				Funciones.Password= c.getString(c.getColumnIndex("password"));
-				
+
 				txtLogin.setText(Funciones.Username);
 				txtPassword.setText(Funciones.Password);
-				
+
 				new IntentarLogin(pd, Funciones.Username, Funciones.Password).execute();
 			}
 			else
@@ -85,7 +89,7 @@ public class Login extends Activity {
 
 
 
-		
+
 
 
 		Button btnLogin = (Button) this.findViewById(R.id.login);
@@ -95,24 +99,24 @@ public class Login extends Activity {
 				new IntentarLogin(pd, txtLogin.getText().toString(), txtPassword.getText().toString()).execute();
 			}
 		});
-		
-        if (!Funciones.isServiceRunning)
-        {
-                startService(new Intent(Login.this, ServicioLokMe.class));
-        }
-        
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        //abro la bd y busco el login
-        
+
+		if (!Funciones.isServiceRunning)
+		{
+			startService(new Intent(Login.this, ServicioLokMe.class));
+		}
+
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		//abro la bd y busco el login
+
 
 
 	}
-	
-	
+
+
 
 	public class IntentarLogin extends AsyncTask<Void, Integer, Integer> {
 		private ProgressDialog progress;
@@ -134,7 +138,7 @@ public class Login extends Activity {
 			progress.setTitle("Lokme");
 			progress.setMessage("Trying to log in");
 			progress.show();
-			
+
 		}
 
 
@@ -149,7 +153,7 @@ public class Login extends Activity {
 			}
 			else
 			{
-				
+
 			}
 			progress.dismiss();
 
@@ -171,5 +175,5 @@ public class Login extends Activity {
 	}
 
 
-	
+
 }

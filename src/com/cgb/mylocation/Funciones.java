@@ -22,6 +22,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+import com.google.android.gcm.GCMRegistrar;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -35,6 +37,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -90,6 +95,10 @@ public class Funciones {
 	static LatLng Ultima=null;
 	
 	static Integer noPreguntarAgregarDevice=0;
+	
+	static String RegistrationID_GCM="";
+	
+	static String RegistrarRegidAndroid = "http://lokme.lextrendlabs.com/devices/addregid.json";
 
 	public static void PreparaConexionBD(Context c)
 	{
@@ -451,7 +460,25 @@ public class Funciones {
 				if (map.get("respuesta").length()>1)
 				{
 					success=true;
+
+					GCMRegistrar.checkDevice(ctx);
+					GCMRegistrar.checkManifest(ctx);
+
+					Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(ctx);
+
+					if (Funciones.RegistrationID_GCM.equals("")) {
+						GCMRegistrar.register(ctx, "4050108544");
+						Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(ctx);
+
+					} else {
+						Log.v("GCM", "Ya estoy registrado");
+					}
+					
+					//GCMRegistrar.unregister(ctx);
+
+					
 					return map.get("respuesta");
+					
 
 				}
 				else
@@ -775,6 +802,32 @@ public class Funciones {
 	        result.put(arr2.get(i));
 	    }
 	    return result;
+	}
+	
+	static void mostrarNotificacion(Context c, String tituloNotificacion, String textoNotificacion, String detalleNotificacion) {
+
+//		tituloNotificacion = "Bizzcall";
+//		textoNotificacion = "Bizzcall notifications";
+//		detalleNotificacion = "New notifications from your administrator";
+		final int MY_NOTIFICATION_ID=1;
+		NotificationManager notificationManager;
+		Notification myNotification;
+		notificationManager =(NotificationManager)c.getSystemService(Context.NOTIFICATION_SERVICE);
+		myNotification = new Notification(R.drawable.ic_launcher,tituloNotificacion, System.currentTimeMillis());
+		Context context = c;
+		String notificationTitle = textoNotificacion;
+		String notificationText = detalleNotificacion;
+		Intent myIntent = new Intent(c, Login.class);
+		PendingIntent pendingIntent= PendingIntent.getActivity(c,0, myIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT);
+		myNotification.defaults |= Notification.DEFAULT_SOUND;
+		myNotification.flags |= Notification.FLAG_AUTO_CANCEL;
+		myNotification.setLatestEventInfo(context,
+				notificationTitle,
+				notificationText,
+				pendingIntent);
+		notificationManager.notify(MY_NOTIFICATION_ID, myNotification);
+
+
 	}
 	
 }
