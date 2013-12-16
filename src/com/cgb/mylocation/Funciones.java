@@ -465,14 +465,11 @@ public class Funciones {
 					GCMRegistrar.checkManifest(ctx);
 
 					Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(ctx);
+					GCMRegistrar.unregister(ctx);
+					
+					GCMRegistrar.register(ctx, "4050108544");
+					Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(ctx);
 
-					if (Funciones.RegistrationID_GCM.equals("")) {
-						GCMRegistrar.register(ctx, "4050108544");
-						Funciones.RegistrationID_GCM = GCMRegistrar.getRegistrationId(ctx);
-
-					} else {
-						Log.v("GCM", "Ya estoy registrado");
-					}
 					
 					//GCMRegistrar.unregister(ctx);
 

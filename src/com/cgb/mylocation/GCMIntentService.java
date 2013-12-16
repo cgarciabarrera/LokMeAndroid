@@ -28,7 +28,7 @@ public class GCMIntentService extends GCMBaseIntentService {
 	protected void onMessage(Context context, Intent intent){
 		// Notificación recibida: informo al usuario u otra acción   
 
-		Funciones.mostrarNotificacion(context, intent.getStringExtra("score"), "texto notificacion", "detalle notificacion");
+		Funciones.mostrarNotificacion(context, intent.getStringExtra("titulop"), intent.getStringExtra("titulolargo"), intent.getStringExtra("descripcion"));
 		
 	
 	}
