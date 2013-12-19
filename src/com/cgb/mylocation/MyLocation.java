@@ -31,6 +31,7 @@ public class MyLocation {
             return false;
 
         if(gps_enabled)
+        	
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListenerGps);
         if(network_enabled)
             lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListenerNetwork);

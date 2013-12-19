@@ -99,6 +99,8 @@ public class Funciones {
 	static String RegistrationID_GCM="";
 	
 	static String RegistrarRegidAndroid = "http://lokme.lextrendlabs.com/devices/addregid.json";
+	
+	static long UltimoTimeStampEnvio =0;
 
 	public static void PreparaConexionBD(Context c)
 	{
@@ -120,10 +122,16 @@ public class Funciones {
 
 		//preparo la cadena
 		String strCadenaSQL="";
+		if (punto==null)
+		{
+		}
+		else
+		{
+			strCadenaSQL = "Insert into points (accuracy, altitude, bearing, latitude, longitude, provider, speed, timefix, hasaccuracy, hasaltitude, hasbearing, hasspeed, charging, batterylevel ) values (" + (int)(punto.getAccuracy()) + ", "  + (int)(punto.getAltitude()) + ", "  + (int)(punto.getBearing()) + ", "  + Double.toString(punto.getLatitude()) + ", "  + Double.toString(punto.getLongitude()) + ", "  + EC(punto.getProvider()) + ", "  + Double.toString(punto.getSpeed()) + ", "  + Long.toString(punto.getTime()) + ", "  + BoolToINT(punto.hasAccuracy()) + ", "  + BoolToINT(punto.hasAltitude()) + ", "  + BoolToINT(punto.hasBearing()) + ", "  + BoolToINT(punto.hasSpeed()) + ", "  + BoolToINT(Funciones.getBatteryChargingStatus(c)) + ", " + (int)Funciones.getBatteryLevel(c) + ")";
+			Funciones.dbBizz.execSQL(strCadenaSQL);
+			
+		}
 
-		strCadenaSQL = "Insert into points (accuracy, altitude, bearing, latitude, longitude, provider, speed, timefix, hasaccuracy, hasaltitude, hasbearing, hasspeed, charging, batterylevel ) values (" + (int)(punto.getAccuracy()) + ", "  + (int)(punto.getAltitude()) + ", "  + (int)(punto.getBearing()) + ", "  + Double.toString(punto.getLatitude()) + ", "  + Double.toString(punto.getLongitude()) + ", "  + EC(punto.getProvider()) + ", "  + Double.toString(punto.getSpeed()) + ", "  + Long.toString(punto.getTime()) + ", "  + BoolToINT(punto.hasAccuracy()) + ", "  + BoolToINT(punto.hasAltitude()) + ", "  + BoolToINT(punto.hasBearing()) + ", "  + BoolToINT(punto.hasSpeed()) + ", "  + BoolToINT(Funciones.getBatteryChargingStatus(c)) + ", " + (int)Funciones.getBatteryLevel(c) + ")";
-		Funciones.dbBizz.execSQL(strCadenaSQL);
-		String a="";
 
 
 
